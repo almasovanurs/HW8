@@ -1,8 +1,15 @@
 package peaksoft.dao;
 
 import peaksoft.model.User;
+import peaksoft.util.Util;
 
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
+import static peaksoft.util.Util.connect;
+
+
+import static javax.management.remote.JMXConnectorFactory.connect;
 
 public class UserDaoJdbcImpl implements UserDao {
 
@@ -11,26 +18,100 @@ public class UserDaoJdbcImpl implements UserDao {
     }
 
     public void createUsersTable() {
-
+        String sql = "CREATE TABLE users(" +
+                "id SERIAL PRIMARY KEY," +
+                "name VARCHAR(40) NOT NULL," +
+                "lastName VARCHAR(40) NOT NULL," +
+                "age INT);";
+        try(
+                Connection connection = connect();
+                Statement statement = connection.createStatement()){
+            statement.executeUpdate(sql);
+            System.out.println("table is create");
+        }catch (SQLException e){
+            System.out.println(e.getMessage());
+        }
     }
 
+
+
+
+
     public void dropUsersTable() {
+        String DROP_SQL = "DROP TABLE users";
+        try (Connection connect = connect()) {
+            Statement statement = connect.createStatement();
+            statement.executeUpdate(DROP_SQL);
+            System.out.println("udaleniya tablis");
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
 
     }
 
     public void saveUser(String name, String lastName, byte age) {
+        String SQL = "INSERT INTO users (name, lastName, age) VALUES(?,?,?)";
+        try (Connection connect = connect();
+             PreparedStatement statement = connect.prepareStatement(SQL)){
+             statement.setString(1, name);
+             statement.setString(2, lastName);
+             statement.setByte(3, age);
+             statement.executeUpdate();
+            System.out.println("maalymat koshuldu");
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
 
     }
 
     public void removeUserById(long id) {
+        String REMOVE_ID = "DELETE FROM users WHERE id = ?";
+        try (Connection connect = connect();
+             PreparedStatement statement = connect.prepareStatement(REMOVE_ID)){
+            statement.setInt(2,(int) id);
+            statement.executeUpdate();
+            System.out.println("udalenie s aidishkoi");
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
 
     }
 
     public List<User> getAllUsers() {
-        return null;
+        String sql = "SELECT * FROM users";
+        List<User> users = new ArrayList<>();
+        try(Connection connect = connect();
+            Statement statement = connect.createStatement();
+            ResultSet resultSet = statement.executeQuery(sql)){
+            while (resultSet.next()){
+                User user1 = new User();
+                int id = resultSet.getInt("id");
+                String name = resultSet.getString("name");
+                String lastName = resultSet.getString("lastname");
+                int age = resultSet.getInt("age");
+                user1.setId((long) id);
+                users.add(user1);
+                user1.setName(name);
+                user1.setLastName(lastName);
+                user1.setAge((byte)age);
+            }
+        }catch (SQLException ex){
+            System.out.println(ex.getMessage());
+        }
+        return users;
+
     }
 
     public void cleanUsersTable() {
+        String CLEAN_SQL = "TRUNCATE users";
+        try (Connection connect = connect();
+            Statement statement = connect.createStatement()){
+            statement.executeUpdate(CLEAN_SQL);
+            System.out.println("chistka tablis");
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
 
     }
 }
